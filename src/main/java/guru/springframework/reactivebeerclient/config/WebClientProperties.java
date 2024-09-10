@@ -1,8 +1,5 @@
 package guru.springframework.reactivebeerclient.config;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class WebClientProperties {
 
     public static final String BASE_URL = "https://api.springframework.guru"; // "http://localhost:8080";
