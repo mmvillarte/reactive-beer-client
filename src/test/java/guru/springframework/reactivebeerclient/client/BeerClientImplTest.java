@@ -20,7 +20,8 @@ class BeerClientImplTest {
 
     BeerClientImpl beerClient;
 
-    private UUID beerId;
+    // By default, empty
+    private BeerDto beerDto = BeerDto.builder().build();
 
     @BeforeEach
     void setUp() {
@@ -31,13 +32,13 @@ class BeerClientImplTest {
 
         BeerPagedList pagedList = beerPagedListMono.block();
 
-        beerId = pagedList.getContent().get(0).getId();
+        beerDto = pagedList.getContent().get(0);
     }
 
     @Test
     void getBeerById() {
         // Found here: https://api.springframework.guru/api/v1/beer
-        Mono<BeerDto> beerDtoMono = beerClient.getBeerById(beerId, false);
+        Mono<BeerDto> beerDtoMono = beerClient.getBeerById(beerDto.getId(), false);
 
         BeerDto beerDto = beerDtoMono.block();
 
@@ -48,22 +49,22 @@ class BeerClientImplTest {
 
     @Test
     void getBeerByIdFromBeerList() {
-        Mono<BeerDto> beerDtoMono = beerClient.getBeerById(beerId, false);
+        Mono<BeerDto> beerDtoMono = beerClient.getBeerById(beerDto.getId(), false);
 
         BeerDto beerDto = beerDtoMono.block();
 
-        assertThat(beerDto.getId()).isEqualTo(beerId);
+        assertThat(beerDto.getId()).isEqualTo(beerDto.getId());
         // assertThat(beerDto.getQuantityOnHand()).isNull();
         log.info("Found Beer: {}", beerDto);
     }
 
     @Test
     void getBeerByIdFromBeerList_ShowInventoryTrue() {
-        Mono<BeerDto> beerDtoMono = beerClient.getBeerById(beerId, true);
+        Mono<BeerDto> beerDtoMono = beerClient.getBeerById(beerDto.getId(), true);
 
         BeerDto beerDto = beerDtoMono.block();
 
-        assertThat(beerDto.getId()).isEqualTo(beerId);
+        assertThat(beerDto.getId()).isEqualTo(beerDto.getId());
         assertThat(beerDto.getQuantityOnHand()).isNotNull();
         log.info("Found Beer: {}", beerDto);
     }
@@ -76,7 +77,7 @@ class BeerClientImplTest {
                 .listBeers(null, null, null, null, null)
                 .flatMap(beerList -> Mono.justOrEmpty(
                         beerList.stream()
-                                .filter(beer -> beer.getId().equals(beerId))
+                                .filter(beer -> beer.getId().equals(beerDto.getId()))
                                 .findFirst()
                 ));
 
@@ -219,6 +220,16 @@ class BeerClientImplTest {
 
     @Test
     void updateBeer() {
+        BeerDto updatedBeerDto = BeerDto.builder()
+                .beerName("Really Good Bear")
+                .beerStyle(beerDto.getBeerStyle())
+                .price(beerDto.getPrice())
+                .upc(beerDto.getUpc())
+                .build();
+
+        Mono<ResponseEntity<Void>> responseEntityMono = beerClient.updateBeer(beerDto.getId(), updatedBeerDto);
+        ResponseEntity responseEntity = responseEntityMono.block();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 
     @Test
