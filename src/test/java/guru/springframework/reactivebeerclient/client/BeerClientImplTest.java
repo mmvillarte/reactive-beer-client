@@ -6,8 +6,11 @@ import guru.springframework.reactivebeerclient.model.BeerPagedList;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -145,18 +148,6 @@ class BeerClientImplTest {
     }
 
     @Test
-    void createBeer() {
-    }
-
-    @Test
-    void updateBeer() {
-    }
-
-    @Test
-    void deleteBeerById() {
-    }
-
-    @Test
     void getBeerByUpcFromBeerList() {
         Mono<BeerPagedList> beerPagedListMono =
                 beerClient.listBeers(null, null, null, null, null);
@@ -213,6 +204,24 @@ class BeerClientImplTest {
     }
 
     @Test
-    void getBeerByUPC() {
+    void createBeer() {
+        BeerDto beerDto = BeerDto.builder()
+                .beerName("Dogfihhead 98 Min IPA")
+                .beerStyle("IPA")
+                .upc("234848549559")
+                .price(new BigDecimal("18.99"))
+                .build();
+
+        Mono<ResponseEntity<Void>> responseEntityMono = beerClient.createBeer(beerDto);
+        ResponseEntity responseEntity = responseEntityMono.block();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    void updateBeer() {
+    }
+
+    @Test
+    void deleteBeerById() {
     }
 }
