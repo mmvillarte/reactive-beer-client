@@ -9,12 +9,14 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
 class BeerClientImplTest {
@@ -231,6 +233,32 @@ class BeerClientImplTest {
         Mono<ResponseEntity<Void>> responseEntityMono = beerClient.updateBeer(beerDto.getId(), updatedBeerDto);
         ResponseEntity responseEntity = responseEntityMono.block();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    void testDeleteBeerHandleException() {
+        Mono<ResponseEntity<Void>> responseEntityMono = beerClient.deleteBeerById(UUID.randomUUID());
+
+        ResponseEntity responseEntity = responseEntityMono.onErrorResume(throwable -> {
+            if(throwable instanceof WebClientResponseException) {
+                WebClientResponseException exception = (WebClientResponseException) throwable;
+                return Mono.just(ResponseEntity.status(exception.getStatusCode()).build());
+            } else {
+                throw new RuntimeException(throwable);
+            }
+        }).block();
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @Test
+    void deleteBeerById_NotFound() {
+        Mono<ResponseEntity<Void>> responseEntityMono = beerClient.deleteBeerById(UUID.randomUUID());
+
+        assertThrows(WebClientResponseException.class, () -> {
+            ResponseEntity responseEntity = responseEntityMono.block();
+            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        });
     }
 
     @Test
